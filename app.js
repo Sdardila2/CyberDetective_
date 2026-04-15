@@ -220,44 +220,6 @@ function toggleAllPanels() {
   applyLayoutState();
 }
 
-function playFinalCinematic() {
-  const resolved = state.score >= ENDING_THRESHOLD;
-
-  playCinematic({
-    title: resolved
-      ? 'Final bueno – La verdad sale a la luz'
-      : 'Final malo – Cuando nadie actúa a tiempo',
-    text: resolved
-      ? `Las pruebas fueron claras.
-Las decisiones, firmes.
-La verdad, inevitable.
-
-El responsable no pudo esconderse más.
-Valeria fue escuchada.
-El daño fue reconocido.
-
-No todo se borra,
-pero algo cambia:
-ya no está sola.
-
-El caso se cierra.
-Y Valeria puede seguir adelante.`
-      : `Las pruebas quedaron incompletas.
-Las decisiones llegaron tarde.
-El daño se acumuló.
-
-El acoso no se detuvo.
-Los rumores continuaron.
-El silencio ganó demasiado espacio.
-
-Valeria tomó una decisión difícil,
-pero necesaria para sobrevivir.
-
-Se va del colegio.
-El caso queda inconcluso.`
-  });
-}
-
 function buildLevel() {
   const level = levels[state.levelIndex];
   state.currentEvidence = [];
@@ -291,8 +253,8 @@ function buildLevel() {
   }
 
   if (level.final) {
-
     const isGoodEnding = state.score >= GOOD_ENDING_SCORE;
+    const storyCard = document.getElementById('storyCard');
   
     if (isGoodEnding) {
       storyCard.innerHTML = `
@@ -330,10 +292,10 @@ function buildLevel() {
       setSubtitle('El caso quedó inconcluso. Las consecuencias fueron graves.');
     }
   
+    const nextBtn = document.getElementById('nextBtn');
     nextBtn.textContent = 'Volver a jugar';
     nextBtn.disabled = false;
 
-    // opcional: ocultar otros paneles y dejar solo la historia
     state.layout.storyVisible = true;
     state.layout.sideVisible = false;
     state.layout.mapFocus = false;
@@ -343,7 +305,6 @@ function buildLevel() {
     updateHUD();
     return;
   }
-  
 
   document.getElementById('mapBadge').textContent = 'Explora con WASD';
   const positions = [
@@ -378,30 +339,6 @@ function buildLevel() {
     : 'Mapa ampliado listo. Si añades detective.png a la carpeta, el detective usará tu imagen.');
 }
 
-function nextStep() {
-  if (state.levelIndex === levels.length - 1) {
-    resetGame();
-    return;
-  }
-
-  playCinematic({
-    title: 'La investigación avanza',
-    text: `El caso no termina aquí.
-
-Las palabras siguen circulando.
-Las miradas cambian.
-El silencio de algunos pesa tanto como los ataques de otros.
-
-Lo que empezó como un mensaje aislado
-comienza a tomar forma.
-
-Más pruebas aparecen.
-Más decisiones te esperan.
-
-La siguiente etapa será aún más compleja.`,
-  });
-}
-
 function renderStory() {
   const level = levels[state.levelIndex];
   document.getElementById('levelBadge').textContent = level.badge;
@@ -414,7 +351,7 @@ function renderStory() {
       Pena: ${item.penalty}<br>
       Conclusión: ${item.conclusion}<br>
       Evidencias: ${item.evidence.join(', ')}</li>`).join('');
-    card.innerHTML = `<h3>${level.title}</h3><p>${level.situation}</p><p><strong>Objetivos finales:</strong></p><ul>${level.objective.map(item => `<li>${item}</li>`).join('')}</ul><h3>Reporte final</h3>${report ? `<ol>${report}</ol>` : '<p>No se insertaron casos.</p>'}<p><strong>Conclusión:</strong> una cadena de “bromas” digitales puede convertirse en varios delitos reales.</p>`;
+    card.innerHTML = `<h3>${level.title}</h3><p>${level.situation}</p><p><strong>Objetivos finales:</strong></p><ul>${level.objective.map(item => `<li>${item}</li>`).join('')}</ul><h3>Reporte final</h3>${report ? `<ol>${report}</ol>` : '<p>No se insertaron casos.</p>'}<p><strong>Conclusión:</strong> una cadena de "bromas" digitales puede convertirse en varios delitos reales.</p>`;
     document.getElementById('nextBtn').textContent = 'Volver al inicio';
     document.getElementById('nextBtn').disabled = false;
     setSubtitle('El árbol de la verdad está completo.');
@@ -445,6 +382,10 @@ function renderHUD() {
   document.getElementById('treeStats').textContent = `${state.insertedCases.length} caso${state.insertedCases.length === 1 ? '' : 's'}`;
   const analyzed = state.currentEvidence.filter(ev => ev.read);
   document.getElementById('collectedEvidence').innerHTML = analyzed.length ? analyzed.map(ev => `<li>${ev.text}</li>`).join('') : '<li class="muted">Aún no has analizado evidencias.</li>';
+}
+
+function updateHUD() {
+  renderHUD();
 }
 
 function renderEvidenceViewer() {
@@ -602,10 +543,22 @@ function evaluateDecision() {
 }
 
 function nextStep() {
-  if (state.levelIndex === levels.length - 1) { resetGame(); return; }
-  state.levelIndex += 1;
-  buildLevel();
+  if (state.levelIndex === levels.length - 1) {
+    resetGame();
+    return;
+  }
+
+  playCinematic({
+    title: 'La investigación continúa',
+    text: 'Aunque el caso avanza, el acoso no se ha detenido. Nuevas pruebas salen a la luz…',
+    onEnd: () => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      state.levelIndex++;
+      buildLevel();
+    }
+  });
 }
+
 function resetGame() {
   state.levelIndex = 0;
   state.score = 0;
@@ -695,34 +648,6 @@ function playCinematic({ title, text, onEnd }) {
   };
 }
 
-const level = levels[state.levelIndex];
-
-if (!level.final) {
-  playCinematic({
-    title: `Nivel ${level.id}: ${level.title}`,
-    text: level.situation
-  });
-}
-
-function nextStep() {
-  if (state.levelIndex === levels.length - 1) {
-    resetGame();
-    return;
-  }
-
-  playCinematic({
-    title: 'La investigación continúa',
-    text: 'Aunque el caso avanza, el acoso no se ha detenido. Nuevas pruebas salen a la luz…',
-    onEnd: () => {
-      window.scrollTo({ top: 0, behavior: 'instant' });
-      state.levelIndex++;
-      buildLevel();
-    }
-  });
-}
-
-
-
 function drawScene() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#0b1220';
@@ -772,20 +697,27 @@ function handleKeyCommand(key) {
 function initControls() {
   window.addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
-    state.keys[key] = true;
-    const movementKeys = [...KEYBINDS.moveUp, ...KEYBINDS.moveDown, ...KEYBINDS.moveLeft, ...KEYBINDS.moveRight];
-    const commandKeys = [KEYBINDS.interact, KEYBINDS.toggleStory, KEYBINDS.toggleSide, KEYBINDS.focusMap, KEYBINDS.toggleAllPanels];
-    if ([...movementKeys, ...commandKeys, ' '].includes(key)) e.preventDefault();
 
+    // ✅ FIX: Check for typing target FIRST before anything else
     if (isTypingTarget(document.activeElement)) {
       if (key === 'escape') document.activeElement.blur();
       return;
     }
 
+    state.keys[key] = true;
+    const movementKeys = [...KEYBINDS.moveUp, ...KEYBINDS.moveDown, ...KEYBINDS.moveLeft, ...KEYBINDS.moveRight];
+    const commandKeys = [KEYBINDS.interact, KEYBINDS.toggleStory, KEYBINDS.toggleSide, KEYBINDS.focusMap, KEYBINDS.toggleAllPanels];
+    if ([...movementKeys, ...commandKeys, ' '].includes(key)) e.preventDefault();
+
     if (e.repeat && commandKeys.includes(key)) return;
     handleKeyCommand(key);
   });
-  window.addEventListener('keyup', (e) => { state.keys[e.key.toLowerCase()] = false; });
+
+  window.addEventListener('keyup', (e) => {
+    // ✅ FIX: Also guard keyup so keys don't get stuck after typing
+    if (isTypingTarget(document.activeElement)) return;
+    state.keys[e.key.toLowerCase()] = false;
+  });
 }
 
 function initUI() {
@@ -814,7 +746,5 @@ function init() {
   renderTraversal('in');
   requestAnimationFrame(drawScene);
 }
-
-
 
 document.addEventListener('DOMContentLoaded', init);
