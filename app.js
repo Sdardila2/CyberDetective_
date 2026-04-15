@@ -131,7 +131,7 @@ const ctx = canvas.getContext('2d');
 canvas.width = WORLD.width;
 canvas.height = WORLD.height;
 
-const player = { x: 90, y: 360, size: 24, speed: 3.1, spriteSize: 52 };
+const player = { x: 90, y: 360, size: 24, speed: 3.1, spriteSize: 55 };
 const terminal = { x: 1120, y: 280, w: 84, h: 150 };
 const walls = [
   { x: 210, y: 90, w: 24, h: 430 },
@@ -507,10 +507,16 @@ function evaluateDecision() {
   const validReadCount = state.currentEvidence.filter(ev => ev.ok && ev.read).length;
   const readCount = state.currentEvidence.filter(ev => ev.read).length;
   const conclusion = document.getElementById('conclusionInput').value.trim();
+  const correct_audio = new Audio("correct_option.mp3");
   let points = 0;
   const messages = [];
 
-  if (selectedCrime === level.correctCrime) { points += 35; messages.push('Clasificación correcta.'); }
+  if (selectedCrime === level.correctCrime) 
+    { 
+      correct_audio.play();
+      correct_audio.currentTime = 0;
+      points += 35; messages.push('Clasificación correcta.');
+     }
   else messages.push(`El delito esperado era <strong>${level.correctCrime}</strong>.`);
   if (validReadCount >= level.minEvidence) { points += 25; messages.push('Leíste suficientes evidencias relevantes.'); }
   else messages.push('Te faltó leer o relacionar evidencias relevantes.');
