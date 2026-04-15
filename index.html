@@ -1,0 +1,223 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CyberDetective - Versión corregida</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>CyberDetective: El Árbol de la Verdad</h1>
+      <p class="subtitle">Versión corregida con mapa ampliado, paneles con atajos y sprite opcional</p>
+    </div>
+    <div class="header-actions">
+      <button id="helpBtn" class="secondary">Controles</button>
+      <button id="contrastBtn" class="secondary">Alto contraste</button>
+      <button id="restartBtn" class="danger">Reiniciar</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel map-panel" id="mapPanel">
+      <div class="panel-header">
+        <div>
+          <h2>Mapa de investigación</h2>
+          <p class="map-subtitle">Explora, recoge pruebas y vuelve al terminal cuando tengas base para concluir.</p>
+        </div>
+        <div class="map-header-right">
+          <span id="mapBadge" class="badge">Explora con WASD</span>
+          <span id="layoutModeBadge" class="badge subtle">Modo normal</span>
+        </div>
+      </div>
+
+      <div class="controls-inline">
+        <span><strong>WASD / flechas</strong> mover</span>
+        <span><strong>E</strong> interactuar</span>
+        <span><strong>M</strong> foco mapa</span>
+      </div>
+
+      <div class="map-shell">
+        <canvas id="gameCanvas" width="1280" height="720" aria-label="Mapa interactivo del detective"></canvas>
+      </div>
+
+      <div class="map-bottom-bar">
+        <div id="interactionHint" class="hint">Muévete hacia una evidencia o al terminal.</div>
+        <div id="keyLegend" class="panel-toggle-legend"></div>
+      </div>
+    </section>
+
+    <section class="panel story-panel" id="storyPanel">
+      <div class="panel-header">
+        <h2>Investigación actual</h2>
+        <span id="levelBadge" class="badge">Nivel 1</span>
+      </div>
+
+      <article id="storyCard" class="story-card"></article>
+
+      <section id="terminalPanel" class="terminal-panel hidden">
+        <h3>Terminal de análisis</h3>
+        <p id="terminalPrompt"></p>
+
+        <div class="question-block">
+          <label for="crimeSelect">Clasifica el delito</label>
+          <select id="crimeSelect"></select>
+        </div>
+
+        <div class="question-block">
+          <label for="severityRange">Gravedad: <span id="severityValue">50</span></label>
+          <input id="severityRange" type="range" min="10" max="100" step="5" value="50" />
+        </div>
+
+        <div class="question-block">
+          <p>Evidencias analizadas</p>
+          <ul id="collectedEvidence" class="evidence-list"></ul>
+        </div>
+
+        <div class="question-block">
+          <label for="conclusionInput">Conclusión del detective</label>
+          <textarea id="conclusionInput" rows="4" placeholder="Ejemplo: Las pruebas sugieren una injuria reiterada porque..."></textarea>
+          <small class="muted">Primero revisa las evidencias una por una en el expediente.</small>
+        </div>
+
+        <div class="actions-row">
+          <button id="submitDecisionBtn">Insertar caso en el AVL</button>
+        </div>
+      </section>
+
+      <section id="feedbackBox" class="feedback hidden"></section>
+      <section class="actions-row">
+        <button id="nextBtn" disabled>Siguiente caso</button>
+      </section>
+    </section>
+
+    <section class="panel side-panel" id="sidePanel">
+      <div class="panel-header">
+        <h2>Panel del detective</h2>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <span class="stat-label">Progreso</span>
+          <strong id="progressText">1 / 5</strong>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Puntaje</span>
+          <strong id="scoreText">0</strong>
+        </div>
+      </div>
+
+      <section>
+        <h3>Pistas</h3>
+        <ul id="cluesList" class="clues-list"></ul>
+      </section>
+
+      <section class="dossier-panel">
+        <div class="panel-header tiny-gap">
+          <h3>Expediente de evidencias</h3>
+          <span id="evidenceCounter" class="badge small">0 / 0</span>
+        </div>
+
+        <div class="dossier-shell">
+          <div class="dossier-topbar">
+            <div>
+              <span class="dossier-label">Archivo</span>
+              <strong id="dossierCaseCode">NET-CASE-01</strong>
+            </div>
+            <div>
+              <span class="dossier-label">Estado</span>
+              <strong id="dossierStatus">Sin evidencias</strong>
+            </div>
+            <div class="stamp">CONFIDENCIAL</div>
+          </div>
+
+          <div class="dossier-tabs">
+            <span class="tab active">Resumen</span>
+            <span class="tab">Análisis</span>
+            <span class="tab">Inferencia</span>
+          </div>
+
+          <div id="evidenceViewer" class="dossier-page">
+            <p class="muted">Recoge una evidencia para abrir el expediente.</p>
+          </div>
+
+          <div class="dossier-footer">
+            <div class="footer-block">
+              <span class="dossier-label">Investigador</span>
+              <strong>Alex / Unidad Digital</strong>
+            </div>
+            <div class="footer-block">
+              <span class="dossier-label">Lectura válida</span>
+              <strong id="readStatusText">Pendiente</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="viewer-actions">
+          <button id="prevEvidenceBtn" class="secondary">Anterior</button>
+          <button id="markReadBtn">Marcar como leída</button>
+          <button id="nextEvidenceBtn" class="secondary">Siguiente</button>
+        </div>
+
+        <div id="conclusionBox" class="conclusion-box muted">
+          <strong>Conclusión preliminar:</strong> aún no hay suficientes evidencias leídas.
+        </div>
+      </section>
+
+      <section>
+        <h3>Árbol AVL</h3>
+        <div id="treeStats" class="badge">0 casos</div>
+        <div id="treeContainer" class="tree-container"><p class="muted">Aún no hay nodos.</p></div>
+      </section>
+
+      <section>
+        <h3>Recorridos</h3>
+        <div class="traversal-actions">
+          <button data-order="in">Inorden</button>
+          <button data-order="pre">Preorden</button>
+          <button data-order="post">Postorden</button>
+        </div>
+        <div id="traversalOutput" class="traversal-output">Sin nodos todavía.</div>
+      </section>
+
+      <section>
+        <h3>Subtítulos</h3>
+        <div id="subtitleBox" class="subtitle-box">Alex: Usa WASD para recorrer la escena, leer el expediente y formular una conclusión.</div>
+      </section>
+    </section>
+  </main>
+
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="panel-header">
+        <h2>Controles y personalización</h2>
+        <button id="closeModalBtn" class="secondary">Cerrar</button>
+      </div>
+      <div class="modal-content">
+        <ul>
+          <li><strong>WASD</strong> o flechas: mover al detective.</li>
+          <li><strong>E</strong>: recoger evidencia o abrir el terminal.</li>
+          <li><strong>1</strong>: mostrar / ocultar panel de investigación.</li>
+          <li><strong>2</strong>: mostrar / ocultar panel del detective.</li>
+          <li><strong>M</strong>: foco total en mapa.</li>
+          <li><strong>P</strong>: mostrar / ocultar ambos paneles secundarios.</li>
+          <li>Los atajos son configurables en la parte superior de <code>app.js</code>.</li>
+          <li>Si existe <strong>detective.png</strong> en la misma carpeta, se usa como sprite del personaje.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="cinematicOverlay" class="cinematic-overlay hidden">
+    <div class="cinematic-box">
+      <h2 id="cinematicTitle"></h2>
+      <p id="cinematicText"></p>
+      <button id="cinematicBtn">Continuar</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
